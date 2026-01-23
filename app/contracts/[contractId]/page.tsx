@@ -13,11 +13,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ContractCallForm } from "@/components/contract-call-form";
 
 // Hardcoded for Wave 1 - moved to a constant
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -44,15 +46,12 @@ export default function ContractDetailPage() {
       try {
         const server = new SorobanRpc.Server(RPC_URL);
 
-        // 1. Verify the Contract ID is valid
         try {
           Address.fromString(contractId);
-        } catch (e) {
+        } catch {
           throw new Error("Invalid Contract ID format.");
         }
 
-        // 2. Fetch the Contract Instance (this links the ID to the WASM code)
-        // We use getLedgerEntries to query the state
         const ledgerKey = SorobanRpc.xdr.LedgerKey.contractData(
           new SorobanRpc.xdr.LedgerKeyContractData({
             contract: new Address(contractId).toScAddress(),
@@ -67,13 +66,10 @@ export default function ContractDetailPage() {
           setData({ exists: false });
         } else {
           const entry = response.entries[0];
-          // Provide basic metadata we can read easily
           setData({
             exists: true,
             lastModified: entry.lastModifiedLedgerSeq,
-            ledgerSeq: entry.lastModifiedLedgerSeq, // Using this as proxy for "latest activity"
-            // Note: Decoding the full XDR to get the Wasm Hash requires more complex XDR parsing
-            // For this issue, confirming existence and ledger sequence is sufficient
+            ledgerSeq: entry.lastModifiedLedgerSeq,
           });
         }
       } catch (err: any) {
@@ -102,10 +98,7 @@ export default function ContractDetailPage() {
             {loading ? (
               <Skeleton className="h-6 w-20 rounded-full" />
             ) : data?.exists ? (
-              <Badge
-                variant="default"
-                className="bg-green-600 hover:bg-green-700"
-              >
+              <Badge className="bg-green-600 hover:bg-green-700">
                 Active
               </Badge>
             ) : error ? (
@@ -120,7 +113,6 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
-      {/* Error State */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -129,9 +121,8 @@ export default function ContractDetailPage() {
         </Alert>
       )}
 
-      {/* Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Main Info Card */}
+        {/* Overview */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -141,70 +132,34 @@ export default function ContractDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
+              <Skeleton className="h-4 w-full" />
             ) : data?.exists ? (
-              <div className="grid gap-4">
-                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    <Database className="h-4 w-4 text-muted-foreground" />
-                    Storage Durability
+              <div className="space-y-4">
+                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="flex items-center gap-2 text-sm">
+                    <Database className="h-4 w-4" /> Storage
                   </span>
                   <span className="text-sm">Persistent</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm font-medium flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    Last Modified Ledger
+                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4" /> Last Modified
                   </span>
                   <span className="font-mono text-sm">{data.lastModified}</span>
                 </div>
-
-                <div className="mt-4 p-4 border rounded-md bg-blue-50/50 dark:bg-blue-900/10">
-                  <h4 className="font-semibold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Contract is Live
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    This contract exists on the Testnet and has initialized
-                    state. You can now proceed to interact with it.
-                  </p>
-                </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Contract data could not be found on the network.</p>
-                <p className="text-sm mt-2">
-                  Ensure you are using the correct Network (Testnet) and
-                  Contract ID.
-                </p>
-              </div>
+              <p className="text-muted-foreground">
+                Contract not found on the network.
+              </p>
             )}
           </CardContent>
         </Card>
 
-        {/* Actions Card (Placeholder for Issue #7) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button className="w-full" disabled={!data?.exists || loading}>
-              Invoke Function (Coming Soon)
-            </Button>
-            <Button variant="outline" className="w-full" asChild>
-              <a
-                href={`https://stellar.expert/explorer/testnet/contract/${contractId}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View on Stellar.Expert
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Contract Interaction Form */}
+        <div className="md:col-span-1">
+          <ContractCallForm contractId={contractId} />
+        </div>
       </div>
     </div>
   );
