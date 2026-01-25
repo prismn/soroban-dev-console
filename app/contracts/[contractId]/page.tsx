@@ -20,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ContractCallForm } from "@/components/contract-call-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContractEvents } from "@/components/contract-events";
 
 // Hardcoded for Wave 1 - moved to a constant
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -98,9 +100,7 @@ export default function ContractDetailPage() {
             {loading ? (
               <Skeleton className="h-6 w-20 rounded-full" />
             ) : data?.exists ? (
-              <Badge className="bg-green-600 hover:bg-green-700">
-                Active
-              </Badge>
+              <Badge className="bg-green-600 hover:bg-green-700">Active</Badge>
             ) : error ? (
               <Badge variant="destructive">Error</Badge>
             ) : (
@@ -112,7 +112,6 @@ export default function ContractDetailPage() {
           </p>
         </div>
       </div>
-
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -120,47 +119,27 @@ export default function ContractDetailPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview & Interaction</TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
+          <TabsTrigger value="code" disabled>
+            Code (Coming Soon)
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Overview */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Box className="h-5 w-5 text-blue-500" />
-              Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {loading ? (
-              <Skeleton className="h-4 w-full" />
-            ) : data?.exists ? (
-              <div className="space-y-4">
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="flex items-center gap-2 text-sm">
-                    <Database className="h-4 w-4" /> Storage
-                  </span>
-                  <span className="text-sm">Persistent</span>
-                </div>
-                <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4" /> Last Modified
-                  </span>
-                  <span className="font-mono text-sm">{data.lastModified}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                Contract not found on the network.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* ... The existing Contract Overview Card & Interaction Form go here ... */}
+            {/* Copy paste your existing layout code here */}
+          </div>
+        </TabsContent>
 
-        {/* Contract Interaction Form */}
-        <div className="md:col-span-1">
-          <ContractCallForm contractId={contractId} />
-        </div>
-      </div>
+        <TabsContent value="events">
+          <ContractEvents contractId={contractId} />
+        </TabsContent>
+      </Tabs>
+      ;
     </div>
   );
 }
