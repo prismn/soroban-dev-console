@@ -4,6 +4,7 @@ import {
   Activity,
   Settings,
   Search,
+  HardDrive,
 } from "lucide-react";
 
 import {
@@ -44,6 +45,11 @@ const items = [
     url: "/tx",
     icon: Search,
   },
+  {
+    title: "WASM Registry",
+    url: "/deploy/wasm",
+    icon: HardDrive, 
+},
 ];
 
 export function AppSidebar() {
