@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import { ContractStorage } from "@/components/contract-storage";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -179,6 +180,10 @@ export default function ContractDetailPage() {
             </div>
           </div>
         </TabsContent>
+
+        <TabsContent value="storage">
+        <ContractStorage contractId={contractId} />
+      </TabsContent>
 
         <TabsContent value="events">
           <ContractEvents contractId={contractId} />
