@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ContractCallForm } from "@/components/contract-call-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContractEvents } from "@/components/contract-events";
+import { TokenDashboard } from "@/components/token-dashboard";
 
 // Hardcoded for Wave 1 - moved to a constant
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -129,9 +130,53 @@ export default function ContractDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Token Dashboard - appears only for SAC contracts */}
+          <TokenDashboard contractId={contractId} />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* ... The existing Contract Overview Card & Interaction Form go here ... */}
-            {/* Copy paste your existing layout code here */}
+            {/* Contract Overview Card */}
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Contract Info
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loading ? (
+                  <>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </>
+                ) : data?.exists ? (
+                  <>
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="font-medium">Active</span>
+                    </div>
+                    {data.ledgerSeq && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span className="text-muted-foreground">Last Modified:</span>
+                        <span className="font-mono text-xs">
+                          Ledger #{data.ledgerSeq}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Contract not found on network
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Contract Interaction Form */}
+            <div className="md:col-span-2">
+              <ContractCallForm contractId={contractId} />
+            </div>
           </div>
         </TabsContent>
 
