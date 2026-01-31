@@ -1,4 +1,3 @@
-// app/contracts/[contractId]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -114,6 +113,25 @@ export default function ContractDetailPage() {
           </p>
         </div>
       </div>
+
+       {/* Action Buttons */}
+        <div className="flex gap-2">
+          {/* NEW: Upgrade Modal */}
+          <ContractUpgradeModal contractId={contractId as string} />
+
+          <Button variant="outline" asChild>
+            <a
+              href={`https://stellar.expert/explorer/testnet/contract/${contractId}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View on Explorer
+            </a>
+          </Button>
+        </div>
+      </div>
+
+
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -121,6 +139,7 @@ export default function ContractDetailPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview & Interaction</TabsTrigger>
