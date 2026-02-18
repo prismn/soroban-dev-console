@@ -1,11 +1,11 @@
-// app/contracts/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useContractStore } from "@/store/useContractStore";
 import { Trash2, Plus, Search, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -28,8 +28,12 @@ export default function ContractsPage() {
   const { contracts, addContract, removeContract } = useContractStore();
   const [inputVal, setInputVal] = useState("");
   const [error, setError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Basic validation for Stellar Contract IDs (starts with C, 56 chars)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleAdd = () => {
     const id = inputVal.trim();
 
@@ -41,11 +45,13 @@ export default function ContractsPage() {
       return;
     }
 
-    addContract(id, "testnet"); // Defaulting to testnet for now
+    addContract(id, "testnet");
     setInputVal("");
     setError("");
     toast.success("Contract added successfully!");
   };
+
+  if (!isMounted) return null;
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -116,8 +122,13 @@ export default function ContractsPage() {
               contracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell className="font-mono text-sm font-medium flex items-center gap-2">
-                    <FileCode className="h-4 w-4 text-blue-500" />
-                    {contract.id}
+                    <Link
+                      href={`/contracts/${contract.id}`}
+                      className="flex items-center gap-2 hover:text-blue-500 hover:underline transition-colors"
+                    >
+                      <FileCode className="h-4 w-4 text-blue-500" />
+                      {contract.id}
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">

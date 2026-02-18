@@ -6,6 +6,7 @@ import {
   Search,
   HardDrive,
   Calculator,
+  UploadCloud,
 } from "lucide-react";
 
 import {
@@ -22,7 +23,12 @@ import {
 
 const items = [
   {
-    title: "Dashboard",
+    title: "Home / Monitor",
+    url: "/",
+    icon: Activity,
+  },
+  {
+    title: "Account Dashboard",
     url: "/account",
     icon: LayoutDashboard,
   },
@@ -32,19 +38,9 @@ const items = [
     icon: FileCode,
   },
   {
-    title: "Transaction Monitor",
-    url: "#",
-    icon: Activity,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Transaction Lookup",
-    url: "/tx",
-    icon: Search,
+    title: "Deploy Contract",
+    url: "/deploy",
+    icon: UploadCloud,
   },
   {
     title: "WASM Registry",
@@ -52,9 +48,19 @@ const items = [
     icon: HardDrive,
   },
   {
+    title: "Transaction Lookup",
+    url: "/tx",
+    icon: Search,
+  },
+  {
     title: "Key Calculator",
     url: "/tools/ledger-keys",
     icon: Calculator,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
   },
 ];
 

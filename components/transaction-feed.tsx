@@ -11,7 +11,8 @@ import {
     ExternalLink,
     Clock,
     ArrowRightLeft,
-    Box
+    Box,
+    AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ export function TransactionFeed() {
     const [transactions, setTransactions] = useState<TxRecord[]>([]);
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [isAccountMissing, setIsAccountMissing] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -56,7 +58,6 @@ export function TransactionFeed() {
                 const serverUrl = getHorizonUrl(currentNetwork);
                 const server = new Horizon.Server(serverUrl);
 
-                // Fetch last 15 transactions, descending order
                 const response = await server.transactions()
                     .forAccount(address)
                     .limit(15)
@@ -73,20 +74,32 @@ export function TransactionFeed() {
                         memo: rec.memo,
                     })));
                     setLastUpdated(new Date());
+                    setIsAccountMissing(false);
+                    timeoutId = setTimeout(fetchTransactions, 5000);
                 }
-            } catch (error) {
-                console.error("Failed to fetch transactions:", error);
+            } catch (error: any) {
+
+                if (error.response && error.response.status === 404) {
+                    if (isMounted) {
+                        setIsAccountMissing(true);
+                        setTransactions([]);
+                        timeoutId = setTimeout(fetchTransactions, 10000);
+                    }
+                } else {
+                    console.error("Failed to fetch transactions:", error);
+                    if (isMounted) {
+                        timeoutId = setTimeout(fetchTransactions, 5000);
+                    }
+                }
             } finally {
                 if (isMounted) {
                     setLoading(false);
-                    // Poll every 5 seconds
-                    timeoutId = setTimeout(fetchTransactions, 5000);
                 }
             }
         }
 
-        // Initial fetch
         setLoading(true);
+        setIsAccountMissing(false);
         fetchTransactions();
 
         return () => {
@@ -95,7 +108,6 @@ export function TransactionFeed() {
         };
     }, [address, isConnected, currentNetwork]);
 
-    // Format helper
     const formatTime = (dateStr: string) => {
         return new Intl.DateTimeFormat('en-US', {
             hour: '2-digit',
@@ -125,10 +137,10 @@ export function TransactionFeed() {
                             Live Activity
                         </CardTitle>
                         <CardDescription className="text-xs">
-                            Auto-updating every 5s • {currentNetwork}
+                            Auto-updating • {currentNetwork}
                         </CardDescription>
                     </div>
-                    {lastUpdated && (
+                    {lastUpdated && !isAccountMissing && (
                         <Badge variant="outline" className="text-[10px] font-mono opacity-70">
                             Updated {lastUpdated.toLocaleTimeString()}
                         </Badge>
@@ -139,15 +151,21 @@ export function TransactionFeed() {
             <CardContent className="flex-1 p-0 overflow-hidden">
                 <ScrollArea className="h-[400px]">
                     <div className="flex flex-col divide-y">
-                        {transactions.length === 0 && !loading ? (
+                        {isAccountMissing ? (
+                            <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center justify-center gap-3">
+                                <AlertCircle className="h-8 w-8 text-orange-400 opacity-50" />
+                                <div>
+                                    <p className="font-semibold text-foreground">Account Not Found</p>
+                                    <p className="mt-1">This wallet has not been funded on {currentNetwork} yet. Use the Friendbot button on the dashboard to get started.</p>
+                                </div>
+                            </div>
+                        ) : transactions.length === 0 && !loading ? (
                             <div className="p-8 text-center text-sm text-muted-foreground">
                                 No recent transactions found on this network.
                             </div>
                         ) : (
                             transactions.map((tx) => (
                                 <div key={tx.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center gap-3">
-
-                                    {/* Status Icon */}
                                     <div className="shrink-0">
                                         {tx.successful ? (
                                             <div className="h-8 w-8 rounded-full bg-green-500/15 flex items-center justify-center">
@@ -160,11 +178,10 @@ export function TransactionFeed() {
                                         )}
                                     </div>
 
-                                    {/* Transaction Details */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-sm font-medium truncate">
-                                                Smart Contract Call
+                                                Transaction
                                             </span>
                                             <span className="text-xs text-muted-foreground font-mono">
                                                 {tx.hash.slice(0, 4)}...{tx.hash.slice(-4)}
@@ -183,7 +200,6 @@ export function TransactionFeed() {
                                         </div>
                                     </div>
 
-                                    {/* External Link */}
                                     <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-muted-foreground">
                                         <a
                                             href={`https://stellar.expert/explorer/${currentNetwork}/tx/${tx.hash}`}

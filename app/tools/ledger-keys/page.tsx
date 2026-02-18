@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { xdr, Address, StrKey } from "@stellar/stellar-sdk";
 import { useNetworkStore } from "@/store/useNetworkStore";
 import {
-  Calculator,
   Copy,
   ExternalLink,
   ArrowRight,
@@ -34,7 +33,6 @@ import { toast } from "sonner";
 export default function LedgerKeyCalculatorPage() {
   const { currentNetwork } = useNetworkStore();
 
-  // Inputs
   const [contractId, setContractId] = useState("");
   const [keyType, setKeyType] = useState<
     "symbol" | "string" | "address" | "i32"
@@ -57,14 +55,10 @@ export default function LedgerKeyCalculatorPage() {
     if (!contractId || !keyValue) return;
 
     try {
-      // 1. Validate Contract ID
-      try {
-        Address.fromString(contractId);
-      } catch {
+      if (!StrKey.isValidContract(contractId)) {
         throw new Error("Invalid Contract ID format");
       }
 
-      // 2. Create ScVal Key
       let scVal: xdr.ScVal;
       switch (keyType) {
         case "symbol":
@@ -85,7 +79,7 @@ export default function LedgerKeyCalculatorPage() {
           throw new Error("Unsupported key type");
       }
 
-      // 3. Construct Ledger Key
+
       const ledgerKey = xdr.LedgerKey.contractData(
         new xdr.LedgerKeyContractData({
           contract: new Address(contractId).toScAddress(),
@@ -96,7 +90,6 @@ export default function LedgerKeyCalculatorPage() {
 
       setXdrBase64(ledgerKey.toXDR("base64"));
     } catch (e: any) {
-      // Don't show error while typing empty fields
       if (contractId && keyValue) {
         setError(e.message);
       }
@@ -111,10 +104,9 @@ export default function LedgerKeyCalculatorPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl space-y-8">
+    <div className="container  p-6 max-w-3xl space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Calculator className="h-8 w-8 text-blue-500" />
           Ledger Key Calculator
         </h1>
         <p className="text-muted-foreground mt-2">

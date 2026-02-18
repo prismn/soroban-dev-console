@@ -1,6 +1,6 @@
-// components/network-switcher.tsx
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useNetworkStore } from '@/store/useNetworkStore';
 import {
   DropdownMenu,
@@ -10,18 +10,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, AlertTriangle, Wifi, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 export function NetworkSwitcher() {
   const { currentNetwork, setNetwork, getAllNetworks } = useNetworkStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const allNetworks = getAllNetworks();
   const activeNet = allNetworks.find(n => n.id === currentNetwork) || allNetworks[0];
 
   const handleSwitch = (id: string) => {
     setNetwork(id);
-    // Reloading page ensures all stale RPC connections (e.g. in hooks) are cleared
     window.location.reload();
   };
 
@@ -35,16 +40,16 @@ export function NetworkSwitcher() {
     }
   };
 
+  if (!isMounted) {
+    return <Skeleton className="h-9 w-[140px] rounded-md" />;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="gap-2 min-w-[140px] justify-between">
           <div className="flex items-center gap-2">
-            {activeNet.id === 'mainnet' ? (
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            ) : (
-              <div className={`h-2 w-2 rounded-full ${getNetworkColor(activeNet.id)}`} />
-            )}
+            <div className={`h-2 w-2 rounded-full ${getNetworkColor(activeNet.id)}`} />
             <span className="font-medium hidden sm:inline-block truncate max-w-[100px]">
               {activeNet.name}
             </span>

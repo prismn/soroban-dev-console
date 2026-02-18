@@ -1,11 +1,10 @@
-// store/useContractStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface Contract {
   id: string;
-  name: string; // Optional nickname
-  network: string; // 'testnet', 'mainnet', etc.
+  name: string;
+  network: string;
   addedAt: number;
 }
 
@@ -21,7 +20,6 @@ export const useContractStore = create<ContractState>()(
       contracts: [],
       addContract: (id, network) =>
         set((state) => {
-          // Prevent duplicates
           if (state.contracts.find((c) => c.id === id)) return state;
           return {
             contracts: [

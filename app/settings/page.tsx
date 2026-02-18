@@ -18,7 +18,7 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     name: '',
     rpcUrl: '',
-    passphrase: 'Test SDF Network ; September 2015', // Default suggestion
+    passphrase: 'Test SDF Network ; September 2015',
   });
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -67,7 +67,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-8">
+    <div className="container p-6 max-w-4xl space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your custom RPC connections and configurations.</p>

@@ -1,4 +1,3 @@
-// app/account/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,7 +9,6 @@ import {
   Coins,
   Hash,
   Users,
-  ExternalLink,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { useWallet } from "@/store/useWallet";
 import { useNetworkStore } from "@/store/useNetworkStore";
+import { FundAccountButton } from "@/components/fund-account-button";
 
 interface AssetBalance {
   asset_type: string;
@@ -102,12 +101,14 @@ export default function AccountDashboard() {
         },
       });
     } catch (err: any) {
-      console.error("Failed to fetch account:", err);
-      if (err.message?.includes("404") || err.message?.includes("not found") || err.response?.status === 404) {
+      const is404 = err.message?.includes("404") || err.message?.includes("not found") || err.response?.status === 404;
+
+      if (is404) {
         setError(
           "Account not found on the network. This is common on Testnet if the account hasn't been funded yet."
         );
       } else {
+        console.error("Failed to fetch account:", err);
         setError(err.message || "Failed to load account data");
       }
       setAccountData(null);
@@ -165,15 +166,20 @@ export default function AccountDashboard() {
             {currentNetwork.toUpperCase()}
           </Badge>
         </div>
-        <Button
-          onClick={fetchAccountData}
-          disabled={loading}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <FundAccountButton />
+          <Button
+            onClick={fetchAccountData}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
+
       </div>
 
       {/* Error Alert */}
@@ -184,17 +190,10 @@ export default function AccountDashboard() {
           <AlertDescription className="space-y-2">
             <p>{error}</p>
             {error.includes("not found") && (
-              <div className="mt-2">
-                <p className="text-sm">To fund your account on Testnet:</p>
-                <a
-                  href="https://laboratory.stellar.org/#account-creator?network=test"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm underline flex items-center gap-1 mt-1"
-                >
-                  Use Stellar Laboratory Account Creator
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+              <div className="mt-3 p-3 bg-destructive/10 rounded-md border border-destructive/20">
+                <p className="text-sm font-medium text-foreground">
+                  💡 Click the <strong className="text-blue-500">"Get Testnet XLM"</strong> button in the top right to instantly fund and create this account!
+                </p>
               </div>
             )}
           </AlertDescription>

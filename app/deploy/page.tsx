@@ -8,12 +8,9 @@ import {
     rpc as SorobanRpc,
     TransactionBuilder,
     TimeoutInfinite,
-    xdr,
-    StrKey,
     hash,
     Address,
     Operation,
-    Asset,
 } from "@stellar/stellar-sdk";
 import { signTransaction } from "@stellar/freighter-api";
 import {
@@ -69,7 +66,6 @@ export default function DeployPage() {
             const arrayBuffer = await file.arrayBuffer();
             const wasmBuffer = Buffer.from(arrayBuffer);
 
-            // 1. Upload WASM (Install Code)
             setStatus("Uploading WASM to network...");
             const sourceAccount = await server.getAccount(address);
 
@@ -78,7 +74,7 @@ export default function DeployPage() {
             });
 
             const tx = new TransactionBuilder(sourceAccount, {
-                fee: "10000", // Higher fee for upload
+                fee: "10000",
                 networkPassphrase: network.networkPassphrase,
             })
                 .addOperation(installOp)
@@ -98,11 +94,11 @@ export default function DeployPage() {
             if (sendRes.status !== "PENDING")
                 throw new Error(`WASM upload failed: ${sendRes.status}`);
 
-            // Wait for completion to get WASM Hash
+
             setStatus("Waiting for WASM confirmation...");
             let wasmHash = "";
 
-            // Poll for status
+
             const getTxStatus = async (hash: string) => {
                 const res = await server.getTransaction(hash);
                 if (res.status === SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
@@ -111,14 +107,13 @@ export default function DeployPage() {
                 return null;
             };
 
-            // Simple polling loop
+
             let attempts = 0;
             while (attempts < 10) {
                 await new Promise((r) => setTimeout(r, 2000));
                 const res = await getTxStatus(sendRes.hash);
                 if (res) {
-                    // Extract Wasm Hash from return value
-                    // Note: In newer SDKs, you might calculate hash locally: hash(wasmBuffer)
+
                     wasmHash = hash(wasmBuffer).toString("hex");
                     break;
                 }
@@ -126,19 +121,19 @@ export default function DeployPage() {
             }
 
             if (!wasmHash) {
-                // Fallback: calculate local hash if polling timed out but tx likely succeeded
+
                 wasmHash = hash(wasmBuffer).toString("hex");
             }
 
-            // 2. Instantiate Contract (Create Contract)
+
             setStatus("Instantiating Contract...");
-            // Refresh sequence number
+
             const sourceAccount2 = await server.getAccount(address);
 
             const createOp = Operation.createCustomContract({
                 wasmHash: Buffer.from(wasmHash, "hex"),
-                address: Address.fromString(address), // Deployer
-                salt: Buffer.alloc(32).fill(0), // Simple salt (should be random in prod)
+                address: Address.fromString(address),
+                salt: Buffer.alloc(32).fill(0),
             });
 
             const createTx = new TransactionBuilder(sourceAccount2, {
@@ -162,11 +157,6 @@ export default function DeployPage() {
                 throw new Error("Instantiation failed");
 
             setStatus("Finalizing deployment...");
-
-            // Calculate the expected Contract ID (Address + Salt + Hash logic)
-            // For simplicity in Wave 1, we can calculate it or wait for tx
-            // StrKey.encodeContract(hash( ... )) logic is complex to reproduce exactly here without SDK helpers
-            // So we wait for the result
 
             attempts = 0;
             while (attempts < 10) {
@@ -200,7 +190,7 @@ export default function DeployPage() {
     };
 
     return (
-        <div className="container mx-auto p-6 max-w-2xl">
+        <div className="container  p-6 max-w-2xl">
             <h1 className="text-3xl font-bold tracking-tight mb-6">
                 Deploy Contract
             </h1>

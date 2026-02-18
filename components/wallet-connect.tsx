@@ -1,9 +1,9 @@
-// components/wallet-connect.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@/store/useWallet";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Dialog,
     DialogContent,
@@ -20,7 +20,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Wallet, LogOut, Copy, ExternalLink } from "lucide-react";
-import { toast } from "sonner"; // Assuming you have a toast library, or standard alert
+import { toast } from "sonner";
+import * as freighter from "@stellar/freighter-api";
+import albedo from "@albedo-link/intent";
 
 export function ConnectWalletButton() {
     const {
@@ -31,9 +33,14 @@ export function ConnectWalletButton() {
         connectAlbedo,
         disconnect,
     } = useWallet();
-    const [isOpen, setIsOpen] = useState(false);
 
-    // Helper to shorten address (e.g., GASX...1234)
+    const [isOpen, setIsOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const shortAddress = address
         ? `${address.slice(0, 4)}...${address.slice(-4)}`
         : "";
@@ -42,19 +49,25 @@ export function ConnectWalletButton() {
         try {
             if (type === "freighter") await connectFreighter();
             if (type === "albedo") await connectAlbedo();
+
             setIsOpen(false);
-            toast.success("Wallet connected successfully!");
-        } catch (error) {
-            toast.error("Failed to connect wallet. Check console for details.");
+            toast.success("Wallet connected!");
+        } catch (error: any) {
+            console.error(error);
+            toast.error(error.message || "Failed to connect wallet.");
         }
     };
 
     const handleCopy = () => {
         if (address) {
             navigator.clipboard.writeText(address);
-            toast.success("Address copied to clipboard");
+            toast.success("Address copied to clipboard!");
         }
     };
+
+    if (!isMounted) {
+        return <Skeleton className="h-9 w-[140px] rounded-md" />;
+    }
 
     if (isConnected && address) {
         return (

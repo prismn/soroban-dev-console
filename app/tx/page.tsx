@@ -10,7 +10,6 @@ import {
   XCircle,
   FileJson,
   Clock,
-  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,6 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import Link from "next/link";
 
-// Helper to get Horizon URL based on network ID
 const getHorizonUrl = (networkId: string) => {
   switch (networkId) {
     case "mainnet":
@@ -74,13 +72,8 @@ export default function TransactionLookupPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-8">
+    <div className="container p-6 max-w-4xl space-y-8">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Transaction Lookup
@@ -205,8 +198,8 @@ export default function TransactionLookupPage() {
                   <FileJson className="h-3 w-3" /> Copy XDR
                 </Button>
               </div>
-              <div className="bg-muted/50 p-3 rounded-md overflow-x-auto">
-                <pre className="text-xs font-mono">{txData.envelope_xdr}</pre>
+              <div className="bg-muted p-4 rounded-md font-mono text-sm break-all whitespace-pre-wrap">
+                {txData.envelope_xdr}
               </div>
               <div className="flex justify-end">
                 <Button variant="link" size="sm" asChild className="px-0">
