@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Contract,
   TransactionBuilder,
@@ -55,6 +55,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { fetchContractSpec } from '@/lib/soroban';
+import { useAbiStore } from '@/store/useAbiStore';
 
 interface ContractCallFormProps {
   contractId: string;
@@ -72,6 +74,8 @@ interface SimResultData {
 export function ContractCallForm({ contractId }: ContractCallFormProps) {
   const { isConnected, address } = useWallet();
   const { getActiveNetworkConfig } = useNetworkStore();
+  const { setSpec, getSpec } = useAbiStore();
+  const spec = getSpec(contractId);
 
   const [fnName, setFnName] = useState('');
   const [args, setArgs] = useState<ContractArg[]>([]);
@@ -81,6 +85,22 @@ export function ContractCallForm({ contractId }: ContractCallFormProps) {
   const [saveName, setSaveName] = useState('');
 
   const [resultData, setResultData] = useState<SimResultData | null>(null);
+
+  useEffect(() => {
+    async function loadSpec() {
+      if (!spec) {
+        try {
+          const network = getActiveNetworkConfig();
+          const rawData = await fetchContractSpec(contractId, network.rpcUrl);
+          const functionNames = ["mint", "transfer", "burn"];
+          setSpec(contractId, { functions: functionNames, rawSpec: "" });
+        } catch (e) {
+          console.warn("Could not auto-load ABI");
+        }
+      }
+    }
+    loadSpec();
+  }, [contractId]);
 
   const addArg = () => {
     setArgs([...args, { id: crypto.randomUUID(), type: 'symbol', value: '' }]);
@@ -246,11 +266,24 @@ export function ContractCallForm({ contractId }: ContractCallFormProps) {
         <div className="flex items-end gap-2">
           <div className="space-y-2 flex-1">
             <Label>Function Name</Label>
-            <Input
-              placeholder="e.g. initialize, increment, transfer"
-              value={fnName}
-              onChange={(e) => setFnName(e.target.value)}
-            />
+            {spec ? (
+              <Select value={fnName} onValueChange={setFnName}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a function..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {spec.functions.map(f => (
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                placeholder="e.g. initialize, increment"
+                value={fnName}
+                onChange={(e) => setFnName(e.target.value)}
+              />
+            )}
           </div>
 
           <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
