@@ -1,11 +1,8 @@
 import cors from "cors";
 import express from "express";
 import { prisma } from "./lib/prisma.js";
-<<<<<<< Updated upstream
-=======
 import { rpcRouter } from "./routes/rpc.js";
 import { workspacesRouter } from "./routes/workspaces.js";
->>>>>>> Stashed changes
 
 const app = express();
 const port = 4000;
@@ -13,10 +10,6 @@ const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 
 app.use((req, res, next) => {
   const origin = req.get("origin");
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
   if (origin && origin !== webOrigin) {
     res.status(403).json({
       error: "CORS origin not allowed"
@@ -43,7 +36,6 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-<<<<<<< Updated upstream
 app.get("/api/workspaces", async (_req, res) => {
   try {
     const workspaces = await prisma.workspace.findMany({
@@ -60,10 +52,9 @@ app.get("/api/workspaces", async (_req, res) => {
     });
   }
 });
-=======
+
 app.use("/api/workspaces", workspacesRouter);
 app.use("/api/rpc", rpcRouter);
->>>>>>> Stashed changes
 
 const server = app.listen(port, () => {
   console.log(`API server listening on http://localhost:${port}`);
