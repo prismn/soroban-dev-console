@@ -12,29 +12,35 @@ export interface SavedCall {
   createdAt: number;
 }
 
+export interface CartItem extends SavedCall {
+  cartItemId: string;
+}
+
 interface SavedCallsState {
   savedCalls: SavedCall[];
+  cartItems: CartItem[];
   saveCall: (call: Omit<SavedCall, "id" | "createdAt">) => SavedCall;
   removeCall: (id: string) => void;
   getCallsForContract: (contractId: string) => SavedCall[];
+  addToCart: (call: SavedCall) => void;
+  removeFromCart: (cartItemId: string) => void;
+  moveCartItem: (cartItemId: string, direction: "up" | "down") => void;
+  clearCart: () => void;
 }
 
 export const useSavedCallsStore = create<SavedCallsState>()(
   persist(
     (set, get) => ({
       savedCalls: [],
+      cartItems: [],
 
       saveCall: (call) => {
-        const savedCall = {
+        const savedCall: SavedCall = {
           ...call,
           id: crypto.randomUUID(),
           createdAt: Date.now(),
         };
-
-        set((state) => ({
-          savedCalls: [savedCall, ...state.savedCalls],
-        }));
-
+        set((state) => ({ savedCalls: [savedCall, ...state.savedCalls] }));
         return savedCall;
       },
 
@@ -43,12 +49,35 @@ export const useSavedCallsStore = create<SavedCallsState>()(
           savedCalls: state.savedCalls.filter((c) => c.id !== id),
         })),
 
-      getCallsForContract: (contractId) => {
-        return get().savedCalls.filter((c) => c.contractId === contractId);
-      },
+      getCallsForContract: (contractId) =>
+        get().savedCalls.filter((c) => c.contractId === contractId),
+
+      addToCart: (call) =>
+        set((state) => ({
+          cartItems: [
+            ...state.cartItems,
+            { ...call, cartItemId: crypto.randomUUID() },
+          ],
+        })),
+
+      removeFromCart: (cartItemId) =>
+        set((state) => ({
+          cartItems: state.cartItems.filter((c) => c.cartItemId !== cartItemId),
+        })),
+
+      moveCartItem: (cartItemId, direction) =>
+        set((state) => {
+          const items = [...state.cartItems];
+          const index = items.findIndex((c) => c.cartItemId === cartItemId);
+          if (index === -1) return state;
+          const target = direction === "up" ? index - 1 : index + 1;
+          if (target < 0 || target >= items.length) return state;
+          [items[index], items[target]] = [items[target], items[index]];
+          return { cartItems: items };
+        }),
+
+      clearCart: () => set({ cartItems: [] }),
     }),
-    {
-      name: "soroban-saved-calls",
-    },
+    { name: "soroban-saved-calls" },
   ),
 );

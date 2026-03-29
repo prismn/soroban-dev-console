@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, ListOrdered, Plus, Trash2 } from "lucide-react";
 
-import { SavedCall } from "@/store/useSavedCallsStore";
+import { CartItem, SavedCall } from "@/store/useSavedCallsStore";
 import { Badge } from "@devconsole/ui";
 import { Button } from "@devconsole/ui";
 import {
@@ -13,13 +13,12 @@ import {
   CardTitle,
 } from "@devconsole/ui";
 
-export type MultiOpCartItem = SavedCall & {
-  cartItemId: string;
-};
+// Re-export for backward compat
+export type { CartItem as MultiOpCartItem };
 
 type MultiOpCartProps = {
   availableCalls: SavedCall[];
-  cartItems: MultiOpCartItem[];
+  cartItems: CartItem[];
   currentNetwork: string;
   onAddCall: (call: SavedCall) => void;
   onRemoveItem: (cartItemId: string) => void;
@@ -63,8 +62,7 @@ export function MultiOpCart({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{call.name}</p>
                   <p className="text-muted-foreground truncate text-xs">
-                    {shortContract(call.contractId)} • {call.fnName}(
-                    {call.args.length})
+                    {shortContract(call.contractId)} • {call.fnName}({call.args.length})
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => onAddCall(call)}>
@@ -109,11 +107,9 @@ export function MultiOpCart({
                       {index + 1}. {item.name}
                     </p>
                     <p className="text-muted-foreground truncate text-xs">
-                      {shortContract(item.contractId)} • {item.fnName}(
-                      {item.args.length})
+                      {shortContract(item.contractId)} • {item.fnName}({item.args.length})
                     </p>
                   </div>
-
                   <div className="flex items-center gap-1">
                     <Button
                       size="icon"
@@ -142,7 +138,6 @@ export function MultiOpCart({
                   </div>
                 </div>
               ))}
-
               <div className="pt-2">
                 <Button variant="outline" size="sm" onClick={onClear}>
                   Clear Cart

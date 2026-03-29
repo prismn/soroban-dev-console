@@ -11,7 +11,7 @@ import { Loader2, Send, Terminal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { MultiOpCart, MultiOpCartItem } from "@/components/multi-op-cart";
+import { MultiOpCart } from "@/components/multi-op-cart";
 import {
   convertToScVal,
   normalizeSimulationResult,
@@ -35,17 +35,9 @@ type SimulationSummary = {
   details: NormalizedSimulationResult;
 };
 
-function toCartItem(call: SavedCall): MultiOpCartItem {
-  return {
-    ...call,
-    cartItemId: crypto.randomUUID(),
-  };
-}
-
 function formatStroops(value: string) {
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return value;
-  return new Intl.NumberFormat("en-US").format(parsed);
+  return Number.isFinite(parsed) ? new Intl.NumberFormat("en-US").format(parsed) : value;
 }
 
 function shortKeyBase64(change: NormalizedSimulationResult["stateChanges"][number]) {
@@ -57,11 +49,11 @@ function shortKeyBase64(change: NormalizedSimulationResult["stateChanges"][numbe
 }
 
 export default function TxBuilderPage() {
-  const { savedCalls } = useSavedCallsStore();
+  const { savedCalls, cartItems, addToCart, removeFromCart, moveCartItem, clearCart } =
+    useSavedCallsStore();
   const { getActiveNetworkConfig, currentNetwork } = useNetworkStore();
   const { isConnected, address } = useWallet();
 
-  const [cartItems, setCartItems] = useState<MultiOpCartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [simulation, setSimulation] = useState<SimulationSummary | null>(null);
@@ -77,32 +69,22 @@ export default function TxBuilderPage() {
   };
 
   const onAddCall = (call: SavedCall) => {
-    setCartItems((prev) => [...prev, toCartItem(call)]);
+    addToCart(call);
     resetSimulation();
   };
 
   const onRemoveItem = (cartItemId: string) => {
-    setCartItems((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
+    removeFromCart(cartItemId);
     resetSimulation();
   };
 
   const onMoveItem = (cartItemId: string, direction: "up" | "down") => {
-    setCartItems((prev) => {
-      const index = prev.findIndex((item) => item.cartItemId === cartItemId);
-      if (index === -1) return prev;
-
-      const target = direction === "up" ? index - 1 : index + 1;
-      if (target < 0 || target >= prev.length) return prev;
-
-      const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
+    moveCartItem(cartItemId, direction);
     resetSimulation();
   };
 
   const onClear = () => {
-    setCartItems([]);
+    clearCart();
     resetSimulation();
   };
 
@@ -118,7 +100,6 @@ export default function TxBuilderPage() {
       toast.error("Add at least two calls to build a multi-operation transaction.");
       return;
     }
-
     if (cartItems.some((item) => item.network !== currentNetwork)) {
       toast.error("All operations must match the currently selected network.");
       return;
@@ -152,19 +133,12 @@ export default function TxBuilderPage() {
 
       const sim = await server.simulateTransaction(tx);
       const normalized = normalizeSimulationResult(sim);
-      if (!normalized.ok) {
-        throw new Error(normalized.error || "Unknown simulation error");
-      }
+      if (!normalized.ok) throw new Error(normalized.error || "Unknown simulation error");
 
-      setSimulation({
-        operationCount: operations.length,
-        details: normalized,
-      });
-
+      setSimulation({ operationCount: operations.length, details: normalized });
       setResult("Simulation success for batched transaction.");
       toast.success("Simulation success");
     } catch (error: any) {
-      console.error(error);
       setSimulation(null);
       setResult(`Simulation failed: ${error.message}`);
       toast.error(`Simulation failed: ${error.message}`);
@@ -178,12 +152,10 @@ export default function TxBuilderPage() {
       toast.error("Connect wallet to sign and submit.");
       return;
     }
-
     if (cartItems.length < 2) {
       toast.error("Add at least two calls to submit a multi-operation transaction.");
       return;
     }
-
     if (cartItems.some((item) => item.network !== currentNetwork)) {
       toast.error("All operations must match the currently selected network.");
       return;
@@ -208,15 +180,10 @@ export default function TxBuilderPage() {
       const sim = await server.simulateTransaction(tx);
       const normalized = normalizeSimulationResult(sim);
       if (!normalized.ok) {
-        throw new Error(
-          `Pre-flight simulation failed: ${normalized.error || "Unknown simulation error"}`,
-        );
+        throw new Error(`Pre-flight simulation failed: ${normalized.error || "Unknown"}`);
       }
 
-      setSimulation({
-        operationCount: operations.length,
-        details: normalized,
-      });
+      setSimulation({ operationCount: operations.length, details: normalized });
 
       const preparedTx = SorobanRpc.assembleTransaction(tx, sim).build();
       const signedResult = await signTransaction(preparedTx.toXDR(), {
@@ -224,10 +191,7 @@ export default function TxBuilderPage() {
       });
 
       const sendResult = await server.sendTransaction(
-        TransactionBuilder.fromXDR(
-          signedResult.signedTxXdr,
-          network.networkPassphrase,
-        ),
+        TransactionBuilder.fromXDR(signedResult.signedTxXdr, network.networkPassphrase),
       );
 
       if (sendResult.status !== "PENDING") {
@@ -237,7 +201,6 @@ export default function TxBuilderPage() {
       setResult(`Transaction submitted. Hash: ${sendResult.hash}`);
       toast.success("Multi-operation transaction submitted.");
     } catch (error: any) {
-      console.error(error);
       setResult(`Submission failed: ${error.message}`);
       toast.error(`Submission failed: ${error.message}`);
     } finally {
@@ -248,11 +211,9 @@ export default function TxBuilderPage() {
   return (
     <div className="container max-w-6xl space-y-6 p-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Multi-Operation Builder
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Multi-Operation Builder</h1>
         <p className="text-muted-foreground">
-          Batch saved contract calls into one atomic transaction.
+          Batch saved contract calls into one atomic transaction. Cart is saved locally.
         </p>
       </div>
 
@@ -284,7 +245,7 @@ export default function TxBuilderPage() {
                   </Badge>
                 )}
                 <Badge variant="secondary">
-                  {simulation.details.stateChangesCount} combined state changes
+                  {simulation.details.stateChangesCount} state changes
                 </Badge>
                 {simulation.details.cpuInsns !== undefined && (
                   <Badge variant="secondary">
@@ -295,7 +256,7 @@ export default function TxBuilderPage() {
 
               {simulation.details.stateChanges.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No state changes were returned by simulation.
+                  No state changes returned by simulation.
                 </p>
               ) : (
                 <div className="grid gap-2">
@@ -306,7 +267,7 @@ export default function TxBuilderPage() {
                     >
                       <span className="mr-2 font-semibold">{change.type}</span>
                       <span className="text-muted-foreground">
-                        key:{shortKeyBase64(change)}...
+                        key:{shortKeyBase64(change)}…
                       </span>
                     </div>
                   ))}

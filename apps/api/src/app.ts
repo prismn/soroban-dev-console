@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import { prisma } from "./lib/prisma.js";
 import { rpcRouter } from "./routes/rpc.js";
+import { sharesRouter } from "./routes/shares.js";
 import { verifyRouter } from "./routes/verify.js";
 import { workspacesRouter } from "./routes/workspaces.js";
 
@@ -55,6 +56,7 @@ export function createApp() {
   });
 
   app.use("/api/workspaces", workspacesRouter);
+  app.use("/api/shares", sharesRouter);
   app.use("/api/rpc", rpcRouter);
   app.use("/api/verify", verifyRouter);
 
